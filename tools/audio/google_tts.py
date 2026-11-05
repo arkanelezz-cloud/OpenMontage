@@ -24,6 +24,7 @@ from tools.base_tool import (
     ToolStatus,
     ToolTier,
 )
+from tools.audio.arabic_voice import GOOGLE_ARABIC_VOICE, is_arabic_text
 from tools.google_credentials import (
     get_access_token,
     service_account_configured,
@@ -91,7 +92,7 @@ class GoogleTTS(BaseTool):
             "voice": {
                 "type": "string",
                 "default": "en-US-Chirp3-HD-Orus",
-                "description": "Voice name. Default tier is Chirp 3 HD (2024, most natural). Examples: en-US-Chirp3-HD-Orus (male, rich/cinematic), en-US-Chirp3-HD-Aoede (female, warm). Legacy tiers: en-US-Studio-O, en-US-Neural2-D, en-US-Journey-D.",
+                "description": "Voice name. Defaults to en-US-Chirp3-HD-Orus, or ar-XA-Chirp3-HD-Orus when the text is Arabic. Default tier is Chirp 3 HD (2024, most natural). Examples: en-US-Chirp3-HD-Orus (male, rich/cinematic), en-US-Chirp3-HD-Aoede (female, warm). Legacy tiers: en-US-Studio-O, en-US-Neural2-D, en-US-Journey-D.",
             },
             "voice_id": {
                 "type": "string",
@@ -174,6 +175,19 @@ class GoogleTTS(BaseTool):
         return any(prefix in voice for prefix in self._BETA_VOICE_PREFIXES)
 
     @staticmethod
+    def _voice_name(inputs: dict[str, Any]) -> str:
+        """Requested voice, or a native default for the text's language.
+
+        Without this, Arabic text went to the en-US default voice.
+        """
+        voice = inputs.get("voice") or inputs.get("voice_id")
+        if voice:
+            return voice
+        if is_arabic_text(inputs.get("text", "")):
+            return GOOGLE_ARABIC_VOICE
+        return "en-US-Chirp3-HD-Orus"
+
+    @staticmethod
     def _locale_from_voice(voice_name: str) -> str:
         """Derive the BCP-47 locale from a voice name like ja-JP-Chirp3-HD-Kore."""
         import re
@@ -184,7 +198,7 @@ class GoogleTTS(BaseTool):
     def estimate_cost(self, inputs: dict[str, Any]) -> float:
         text = inputs.get("text", "")
         char_count = len(text)
-        voice = inputs.get("voice") or inputs.get("voice_id") or "en-US-Chirp3-HD-Orus"
+        voice = self._voice_name(inputs)
         # Pricing per million characters (approximate)
         if "Chirp3-HD" in voice:
             rate_per_char = 0.000030  # $30/1M chars
@@ -240,7 +254,7 @@ class GoogleTTS(BaseTool):
 
         text = inputs["text"]
         input_type = inputs.get("input_type", "text")
-        voice_name = inputs.get("voice") or inputs.get("voice_id") or "en-US-Chirp3-HD-Orus"
+        voice_name = self._voice_name(inputs)
         language_code = inputs.get("language_code") or self._locale_from_voice(voice_name)
         speaking_rate = inputs.get("speaking_rate", 1.0)
         pitch = inputs.get("pitch", 0.0)

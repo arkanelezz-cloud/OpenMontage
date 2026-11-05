@@ -20,6 +20,7 @@ from tools.base_tool import (
     ToolStatus,
     ToolTier,
 )
+from tools.audio.arabic_voice import PIPER_ARABIC_MODEL, is_arabic_text
 
 
 class PiperTTS(BaseTool):
@@ -39,7 +40,8 @@ class PiperTTS(BaseTool):
         "  pip install piper-tts\n"
         "Or download from https://github.com/rhasspy/piper/releases\n"
         "Then download a voice model:\n"
-        "  piper --download-dir ~/.piper/models --model en_US-lessac-medium"
+        "  piper --download-dir ~/.piper/models --model en_US-lessac-medium\n"
+        "For Arabic narration also download ar_JO-kareem-medium."
     )
     agent_skills = ["text-to-speech"]
 
@@ -116,6 +118,15 @@ class PiperTTS(BaseTool):
         result.duration_seconds = round(time.time() - start, 2)
         return result
 
+    @staticmethod
+    def _model(inputs: dict[str, Any]) -> str:
+        """Requested voice model, or the Arabic model for Arabic text."""
+        if inputs.get("model"):
+            return inputs["model"]
+        if is_arabic_text(inputs.get("text", "")):
+            return PIPER_ARABIC_MODEL
+        return "en_US-lessac-medium"
+
     def _generate(self, inputs: dict[str, Any]) -> ToolResult:
         output_path = Path(inputs.get("output_path", "tts_output.wav"))
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -123,7 +134,7 @@ class PiperTTS(BaseTool):
         proc = subprocess.run(
             [
                 "piper",
-                "--model", inputs.get("model", "en_US-lessac-medium"),
+                "--model", self._model(inputs),
                 "--speaker", str(inputs.get("speaker_id", 0)),
                 "--length-scale", str(inputs.get("length_scale", 1.0)),
                 "--sentence-silence", str(inputs.get("sentence_silence", 0.3)),
@@ -144,12 +155,12 @@ class PiperTTS(BaseTool):
             success=True,
             data={
                 "provider": self.provider,
-                "model": inputs.get("model", "en_US-lessac-medium"),
+                "model": self._model(inputs),
                 "speaker_id": inputs.get("speaker_id", 0),
                 "text_length": len(inputs["text"]),
                 "output": str(output_path),
                 "format": "wav",
             },
             artifacts=[str(output_path)],
-            model=inputs.get("model", "en_US-lessac-medium"),
+            model=self._model(inputs),
         )

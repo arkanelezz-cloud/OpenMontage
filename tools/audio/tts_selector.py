@@ -123,6 +123,15 @@ class TTSSelector(BaseTool):
                 "default": "text",
                 "description": "Use 'ssml' only when the selected provider supports tags such as <break>.",
             },
+            "arabic_dialect": {
+                "type": "string",
+                "enum": ["msa", "saudi", "egyptian"],
+                "description": (
+                    "Dialect for the default Arabic voice when the text is Arabic and no "
+                    "voice is given. Azure picks ar-SA or ar-EG voices; other providers "
+                    "pick their single native Arabic voice."
+                ),
+            },
             "language_code": {
                 "type": "string",
                 "description": "Provider-specific language code, such as en-US for Google or en for fal.ai ElevenLabs.",
