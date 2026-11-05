@@ -8,6 +8,7 @@ import {
   Audio,
   CalculateMetadataFunction,
   Img,
+  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -38,6 +39,10 @@ interface Shot {
   transitionSec?: number;
   /** 0-1 dark gradient at the bottom for caption/text legibility. */
   shade?: number;
+  /** For a video src (.mp4/.webm/.mov): seconds into the clip to start from. */
+  videoStart?: number;
+  /** For a video src: playback rate (e.g. 0.8 to stretch a 5s clip). */
+  playbackRate?: number;
 }
 
 interface Feature {
@@ -93,14 +98,31 @@ const ease = Easing.bezier(0.33, 0, 0.2, 1);
 // Shots
 // ---------------------------------------------------------------------------
 
-const MovingImage: React.FC<{ src: string; motion: Motion; fit: "cover" | "contain-blur"; strength?: number }> = ({
-  src,
-  motion,
-  fit,
-  strength = 1,
-}) => {
+const isVideo = (src: string) => /\.(mp4|webm|mov)$/i.test(src);
+
+const MovingImage: React.FC<{
+  src: string;
+  motion: Motion;
+  fit: "cover" | "contain-blur";
+  strength?: number;
+  videoStart?: number;
+  playbackRate?: number;
+}> = ({ src, motion, fit, strength = 1, videoStart = 0, playbackRate = 1 }) => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, fps } = useVideoConfig();
+  const video = isVideo(src);
+  const media = (style: React.CSSProperties) =>
+    video ? (
+      <OffthreadVideo
+        src={resolveAsset(src)}
+        muted
+        startFrom={Math.round(videoStart * fps)}
+        playbackRate={playbackRate}
+        style={style}
+      />
+    ) : (
+      <Img src={resolveAsset(src)} style={style} />
+    );
   const p = interpolate(frame, [0, durationInFrames], [0, 1], { extrapolateRight: "clamp", easing: ease });
   const z = 0.12 * strength;
   const pan = 6 * strength; // percent
@@ -138,30 +160,24 @@ const MovingImage: React.FC<{ src: string; motion: Motion; fit: "cover" | "conta
     ? `50% ${motion === "panUp" ? interpolate(p, [0, 1], [100, 0]) : interpolate(p, [0, 1], [0, 100])}%`
     : "50% 50%";
   const img = (
-    <Img
-      src={resolveAsset(src)}
-      style={{
+    media({
         width: "100%",
         height: "100%",
         objectFit: fit === "cover" ? "cover" : "contain",
         objectPosition,
         transform: tilt ? `scale(${1.04 + 0.04 * p})` : `scale(${scale}) translate(${x}%, ${y}%)`,
-      }}
-    />
+      })
   );
   if (fit === "cover") return <AbsoluteFill style={{ overflow: "hidden" }}>{img}</AbsoluteFill>;
   return (
     <AbsoluteFill style={{ overflow: "hidden" }}>
-      <Img
-        src={resolveAsset(src)}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          filter: "blur(40px) brightness(0.55)",
-          transform: "scale(1.2)",
-        }}
-      />
+      {media({
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        filter: "blur(40px) brightness(0.55)",
+        transform: "scale(1.2)",
+      })}
       {img}
     </AbsoluteFill>
   );
@@ -178,7 +194,15 @@ const ShotView: React.FC<{ shot: Shot; theme: PropertyFilmProps["theme"] }> = ({
   const split = shot.layout === "split";
   const shade = shot.shade ?? 0.45;
 
-  const image = <MovingImage src={shot.src} motion={shot.motion ?? "zoomIn"} fit={shot.fit ?? "cover"} />;
+  const image = (
+    <MovingImage
+      src={shot.src}
+      motion={shot.motion ?? (isVideo(shot.src) ? "none" : "zoomIn")}
+      fit={shot.fit ?? "cover"}
+      videoStart={shot.videoStart}
+      playbackRate={shot.playbackRate}
+    />
+  );
 
   return (
     <AbsoluteFill style={{ opacity, transform: `scale(${punch})` }}>
