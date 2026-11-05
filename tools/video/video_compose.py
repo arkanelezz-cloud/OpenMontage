@@ -1333,10 +1333,18 @@ class VideoCompose(BaseTool):
 
             # Derive caption colors from the palette
             theme["captionHighlightColor"] = primary
-            # Caption background: semi-transparent version of the bg color
+            # Caption background: a light bar on light themes, a dark bar
+            # otherwise. Decided by luminance, not a list of exact hex values,
+            # so warm off-whites like #F6F4EF (paper) also get the light bar
+            # their dark text needs.
+            from styles.playbook_loader import _relative_luminance
+
+            try:
+                light_bg = _relative_luminance(bg) > 0.5
+            except (ValueError, TypeError):
+                light_bg = False
             theme["captionBackgroundColor"] = (
-                f"rgba(255, 255, 255, 0.85)" if bg.upper() in ("#FFFFFF", "#FAFAFA", "#F9FAFB")
-                else f"rgba(15, 23, 42, 0.75)"
+                "rgba(255, 255, 255, 0.85)" if light_bg else "rgba(15, 23, 42, 0.75)"
             )
 
             # Motion style from playbook. `pace` is an identity field in the

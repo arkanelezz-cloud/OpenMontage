@@ -1,0 +1,124 @@
+# Arabic-first, right-to-left identity for Arkan Al Ezz Engineering Consultants
+# (أركان العز للاستشارات الهندسية): architecture, engineering and real-estate
+# films narrated in Arabic.
+#
+# Colours come from the office's approved identity (ark-studio-ai
+# prototype/identity.css and video/brand-kit.mjs): taupe accent #8F7A5C, deep
+# taupe #6E5F45, ink #2B2823, paper #F6F4EF, and the gold title accent #C9B48A.
+# The brand's title font is Tajawal ExtraBold, but Tajawal draws boxes for
+# hamza-under-alef and shadda when FFmpeg/libass burns subtitles, so this
+# playbook uses IBM Plex Sans Arabic (the brand's body font) throughout.
+identity:
+  name: "Arkan Arabic"
+  category: cinematic
+  mood: calm, precise, premium, trustworthy
+  pace: deliberate
+  best_for: "Arabic architecture and engineering films, project walkthroughs, design presentations, real-estate reels for Saudi and Egyptian audiences"
+
+taste_profile:
+  design_read: "Arabic engineering office: quiet confidence, warm paper and taupe, gold used sparingly for the one fact that matters."
+  visual_variance: 4
+  motion_intensity: 3
+  information_density: 4
+  palette_discipline: "Paper or dark-ink field, ink or white text, taupe accents, gold only for highlighted facts and the active caption word."
+  layout_variation: "Right-aligned title blocks, full-bleed renders and site footage, plan and section drawings on paper backgrounds."
+
+visual_language:
+  color_palette:
+    primary: ["#8F7A5C", "#6E5F45"]
+    accent: ["#C9B48A", "#95886F"]
+    background: "#F6F4EF"
+    text: "#2B2823"
+    muted: "#6E6A61"
+  composition: "Right-to-left reading order: titles and lower thirds anchor to the right edge, the eye travels right to left across the frame. Generous margins, architectural symmetry, strong horizon lines."
+  texture: "Clean, matte paper feel; no grain on graphics; renders and footage stay natural and true to material."
+
+typography:
+  headings:
+    font: "IBM Plex Sans Arabic"
+    weight: 700
+    tracking: "0"
+  body:
+    font: "IBM Plex Sans Arabic"
+    weight: 400
+    line_height: 1.7
+  code:
+    font: "JetBrains Mono"
+    weight: 400
+  stat_card:
+    font: "IBM Plex Sans Arabic"
+    weight: 700
+    size_multiplier: 2.5
+  scale_system: "major_third"
+  weight_matrix:
+    title: 700
+    heading: 700
+    body: 400
+    caption: 400
+
+motion:
+  transitions: [fade, dissolve, slide-right]
+  animation_style: "slow ease-in-out, architectural and steady, no bounce"
+  pacing_rules:
+    min_scene_hold_seconds: 3.0
+    max_scene_hold_seconds: 10
+    text_card_hold_seconds: 4.0
+    stat_card_hold_seconds: 3.5
+    transition_duration_seconds: 0.6
+  entrance: "fade-in with a short slide from the right edge (RTL reading start)"
+  exit: "fade-out"
+
+audio:
+  voice_style: "Native Arabic narrator, calm and confident, measured pace. Modern Standard Arabic by default; Saudi or Egyptian when the audience asks for it (tts_selector arabic_dialect: saudi or egyptian)."
+  music_mood: "warm ambient strings and soft piano, cinematic but understated"
+  music_volume: 0.08
+  sfx_style: "soft whooshes on transitions, no clicks"
+  ducking_threshold_db: -3
+
+asset_generation:
+  image_prompt_prefix: "architectural visualization, warm natural light, Saudi and Gulf contemporary architecture, beige stone and taupe tones, clean composition, "
+  image_negative_prompt: "text, letters, watermark, Latin signage, neon, cartoon, oversaturated, cluttered, low quality"
+  diagram_style: "thin ink lines on paper, taupe fills, right-to-left labels in Arabic"
+  consistency_anchors:
+    - "Taupe (#8F7A5C) and gold (#C9B48A) as the only accent colours"
+    - "Paper (#F6F4EF) backgrounds for graphics and drawings"
+    - "All on-screen text in Arabic, right-aligned, IBM Plex Sans Arabic"
+    - "Warm natural daylight on renders; no dramatic colour grading"
+    - "Never generate text inside images; put Arabic text in overlays instead"
+
+overlays:
+  stat_card:
+    bg: "#FFFFFF"
+    border: "#8F7A5C"
+    radius: 6
+    shadow: "0 2px 8px rgba(43,40,35,0.10)"
+  key_term:
+    bg: "#F0ECE5"
+    text: "#6E5F45"
+    radius: 4
+  section_title:
+    bg: "#2B2823"
+    text: "#F6F4EF"
+    border: "#C9B48A"
+    radius: 0
+
+quality_rules:
+  - "All on-screen text is Arabic and reads right to left; Latin only for brand or product names"
+  - "Captions use IBM Plex Sans Arabic so hamza and shadda render in both Remotion and FFmpeg"
+  - "Minimum contrast ratio 4.5:1 for body text"
+  - "Gold (#C9B48A) only on dark backgrounds, never as text on paper"
+  - "Narration in a native Arabic voice; never an English voice reading Arabic"
+  - "Hold establishing shots of buildings for 3s minimum"
+
+chart_palette:
+  - "#8F7A5C"
+  - "#2B2823"
+  - "#C9B48A"
+  - "#2F6A47"
+  - "#6E6A61"
+  - "#95886F"
+
+color_rules:
+  harmony_type: "analogous"
+  contrast_validation: true
+  colorblind_safe: false

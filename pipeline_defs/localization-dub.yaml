@@ -38,7 +38,8 @@ compatible_playbooks:
   recommended:
     - clean-professional
     - flat-motion-graphics
-  also_works: []
+  also_works:
+    - arkan-arabic
   custom_allowed: true
 
 stages:

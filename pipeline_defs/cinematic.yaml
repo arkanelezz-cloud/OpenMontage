@@ -55,6 +55,7 @@ compatible_playbooks:
   also_works:
     - clean-professional
     - minimalist-diagram
+    - arkan-arabic
   custom_allowed: true
 
 stages:
