@@ -47,7 +47,7 @@ interface Feature {
 }
 
 interface Overlay {
-  type: "title" | "bigText" | "stat" | "lowerThird" | "features" | "endCard" | "chips";
+  type: "title" | "bigText" | "stat" | "lowerThird" | "features" | "endCard" | "chips" | "brand";
   start: number;
   end: number;
   text?: string;
@@ -60,6 +60,8 @@ interface Overlay {
   /** Position for bigText/stat: "center" | "top" | "bottom" | "panel". */
   position?: string;
   stats?: { value: number; label: string; at: number }[];
+  /** endCard: icon before the subtitle ("none" hides it). Default "pin". */
+  subIcon?: Feature["icon"] | "none";
 }
 
 export interface PropertyFilmProps {
@@ -346,6 +348,12 @@ const Title: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o,
   const base = Math.min(width, height);
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", opacity: exit }}>
+      <div style={{ ...glass(base), display: "flex", flexDirection: "column", alignItems: "center", padding: `${base * 0.03}px ${base * 0.06}px` }}>
+      {o.label && (
+        <div dir="rtl" style={{ fontFamily: FONT, fontSize: base * 0.04, fontWeight: 700, color: theme.accent, opacity: sub, letterSpacing: 1, marginBottom: base * 0.015, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+          {o.label}
+        </div>
+      )}
       <WordsIn text={o.text ?? ""} size={base * 0.11} color={theme.text} accentFirst={theme.accent} step={5} />
       <div style={{ width: interpolate(line, [0, 1], [0, base * 0.35]), height: Math.max(2, base * 0.004), background: theme.accent, margin: `${base * 0.02}px 0` }} />
       {o.subtitle && (
@@ -353,6 +361,7 @@ const Title: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o,
           {o.subtitle}
         </div>
       )}
+      </div>
     </AbsoluteFill>
   );
 };
@@ -536,6 +545,26 @@ const Chips: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o,
   );
 };
 
+/** Small corner wordmark that stays on screen (office identity on social posts). */
+const Brand: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o, theme }) => {
+  const { width, height } = useVideoConfig();
+  const fade = useRise(0, 20);
+  const exit = useExit(10);
+  const base = Math.min(width, height);
+  const top = (o.position ?? "top") !== "bottom";
+  return (
+    <AbsoluteFill style={{ justifyContent: top ? "flex-start" : "flex-end", alignItems: "flex-end", padding: `${base * 0.045}px ${base * 0.05}px`, opacity: fade * exit }}>
+      <div dir="rtl" style={{ display: "flex", alignItems: "center", gap: base * 0.014, background: "rgba(43,40,35,0.45)", borderRadius: base * 0.012, padding: `${base * 0.01}px ${base * 0.018}px`, backdropFilter: "blur(6px)" }}>
+        <Icon name="building" size={base * 0.04} color={theme.accent} />
+        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
+          <span style={{ fontFamily: FONT, fontSize: base * 0.03, fontWeight: 700, color: theme.text }}>{o.text ?? "أركان العز"}</span>
+          {o.subtitle && <span style={{ fontFamily: FONT, fontSize: base * 0.018, color: theme.accent }}>{o.subtitle}</span>}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 const EndCard: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o, theme }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
@@ -548,10 +577,15 @@ const EndCard: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ 
       <div style={{ marginBottom: base * 0.03, opacity: sub }}>
         <Icon name="building" size={base * 0.12} color={theme.accent} />
       </div>
+      {o.label && (
+        <div dir="rtl" style={{ fontFamily: FONT, fontSize: base * 0.035, color: theme.accent, opacity: sub, marginBottom: base * 0.01 }}>
+          {o.label}
+        </div>
+      )}
       <WordsIn text={o.text ?? ""} size={base * 0.09} color={theme.text} accentFirst={theme.accent} step={5} />
       {o.subtitle && (
         <div dir="rtl" style={{ display: "flex", alignItems: "center", gap: base * 0.015, marginTop: base * 0.02, opacity: sub }}>
-          <Icon name="pin" size={base * 0.05} color={theme.accent} />
+          {o.subIcon !== "none" && <Icon name={o.subIcon ?? "pin"} size={base * 0.05} color={theme.accent} />}
           <span style={{ fontFamily: FONT, fontSize: base * 0.045, color: theme.text }}>{o.subtitle}</span>
         </div>
       )}
@@ -575,6 +609,8 @@ const OverlayView: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> =
       return <Chips o={o} theme={theme} />;
     case "endCard":
       return <EndCard o={o} theme={theme} />;
+    case "brand":
+      return <Brand o={o} theme={theme} />;
   }
 };
 
