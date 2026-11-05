@@ -2921,7 +2921,7 @@ class VideoCompose(BaseTool):
         """FFmpeg ``subtitles`` filter for ``subtitle_path`` with ``style``.
 
         Arabic (RTL) subtitles set to a Latin-only default font are switched to
-        the bundled Arabic font (IBM Plex Sans Arabic), and libass is pointed at ``assets/fonts`` so the
+        the bundled Arabic font (Noto Sans Arabic), and libass is pointed at ``assets/fonts`` so the
         font is found without being installed.
         """
         style = dict(style or {})

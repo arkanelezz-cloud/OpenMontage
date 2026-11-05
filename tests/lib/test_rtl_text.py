@@ -62,13 +62,17 @@ def test_latin_default_font_switches_to_arabic_font(tmp_path: Path):
     assert font_for_subtitles(ar, None) == ARABIC_FONT
     # An explicit non-default font is respected.
     assert font_for_subtitles(ar, "Noto Kufi Arabic") == "Noto Kufi Arabic"
+    # Arabic fonts libass draws with missing glyphs are switched too.
+    for broken in ("IBM Plex Sans Arabic", "Cairo", "Tajawal"):
+        assert font_for_subtitles(ar, broken) == ARABIC_FONT
+        assert font_for_subtitles(en, broken) == broken
     assert font_for_subtitles(en, "Inter") == "Inter"
 
 
 def test_bundled_font_files_exist():
-    assert (BUNDLED_FONTS_DIR / "IBMPlexSansArabic-Regular.ttf").is_file()
-    assert (BUNDLED_FONTS_DIR / "IBMPlexSansArabic-Bold.ttf").is_file()
-    assert (BUNDLED_FONTS_DIR / "IBMPlexSansArabic-OFL.txt").is_file()
+    assert (BUNDLED_FONTS_DIR / "NotoSansArabic-Regular.ttf").is_file()
+    assert (BUNDLED_FONTS_DIR / "NotoSansArabic-Bold.ttf").is_file()
+    assert (BUNDLED_FONTS_DIR / "NotoSansArabic-OFL.txt").is_file()
     assert fontsdir_option().startswith(":fontsdir='")
 
 

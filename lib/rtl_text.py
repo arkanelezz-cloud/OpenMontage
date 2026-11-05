@@ -5,7 +5,7 @@ HarfBuzz/FriBidi, but only when the chosen font actually has Arabic glyphs.
 The default caption fonts (Inter, Arial, Segoe UI) do not on most Linux and
 many macOS machines, so Arabic came out as boxes or as a random fallback font.
 
-OpenMontage ships IBM Plex Sans Arabic (SIL OFL 1.1, Latin + Arabic) in ``assets/fonts`` and
+OpenMontage ships Noto Sans Arabic (SIL OFL 1.1, Latin + Arabic) in ``assets/fonts`` and
 points libass at that folder with ``fontsdir``, so an Arabic subtitle renders
 the same on every machine without installing anything.
 """
@@ -16,19 +16,23 @@ import re
 from pathlib import Path
 
 BUNDLED_FONTS_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
-# Picked after rendering the same Arabic line through libass with Cairo,
-# Tajawal, Noto Kufi Arabic and IBM Plex Sans Arabic: Cairo and Tajawal drew
-# boxes for hamza-under-alef (إ) and shadda, the other two rendered correctly.
-ARABIC_FONT = "IBM Plex Sans Arabic"
+# Picked after rendering "OpenMontage للاستشارات إلى يحوّل لا" through libass
+# (FFmpeg 6.1): Cairo and Tajawal draw boxes for hamza-under-alef (إ) and
+# shadda, IBM Plex Sans Arabic draws a box for every lam-alef (لا, لل).
+# Noto Sans Arabic and Noto Kufi Arabic render all of it. Browsers (Remotion)
+# shape all five correctly; this is a libass-only problem.
+ARABIC_FONT = "Noto Sans Arabic"
 
 # Arabic, Hebrew, Syriac, Thaana, N'Ko, Arabic Supplement/Extended and the
 # Arabic presentation forms.
 _RTL_CHAR = re.compile(r"[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]")
 _LTR_CHAR = re.compile(r"[A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF]")
 
-# Fonts OpenMontage uses as caption defaults. None of them has Arabic glyphs,
-# so an RTL subtitle set to one of them is switched to the bundled Arabic font.
+# Fonts an RTL subtitle is switched away from: OpenMontage's Latin-only caption
+# defaults, which have no Arabic glyphs, and the Arabic fonts above that libass
+# renders with missing glyphs.
 _LATIN_ONLY_DEFAULTS = {"", "inter", "arial", "segoe ui", "space grotesk", "helvetica"}
+_LIBASS_BROKEN_ARABIC = {"ibm plex sans arabic", "cairo", "tajawal"}
 
 # SRT/VTT cue numbers, timing lines and ASS override tags are not text.
 _TIMING_LINE = re.compile(r"-->")
@@ -74,10 +78,12 @@ def subtitle_file_is_rtl(path: str | Path) -> bool:
 def font_for_subtitles(path: str | Path, font: str | None) -> str | None:
     """Return the font to burn ``path`` with.
 
-    Keeps ``font`` unless the subtitles are RTL and ``font`` is one of the
-    Latin-only defaults, in which case the bundled Arabic font is used.
+    Keeps ``font`` unless the subtitles are RTL and ``font`` is a Latin-only
+    default or an Arabic font libass draws with missing glyphs, in which case
+    the bundled Arabic font is used.
     """
-    if (font or "").strip().lower() in _LATIN_ONLY_DEFAULTS and subtitle_file_is_rtl(path):
+    key = (font or "").strip().lower()
+    if key in _LATIN_ONLY_DEFAULTS | _LIBASS_BROKEN_ARABIC and subtitle_file_is_rtl(path):
         return ARABIC_FONT
     return font
 
