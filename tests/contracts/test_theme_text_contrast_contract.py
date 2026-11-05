@@ -92,7 +92,7 @@ def test_theme_text_color_is_threaded_into_overlay_components(component: str) ->
     [
         ("components/SectionTitle.tsx", "color: textColor,"),
         ("components/StatReveal.tsx", "color: textColor,"),
-        ("components/HeroTitle.tsx", "color: i < 8 ? accentColor : textColor,"),
+        ("components/HeroTitle.tsx", "color: i < accentCount ? accentColor : textColor,"),
         ("components/HeroTitle.tsx", "color: subtitleColor,"),
         ("components/HeroTitle.tsx", "backgroundColor: accentColor,"),
         ("components/HeroTitle.tsx", "background: scrimBackground,"),
@@ -111,7 +111,8 @@ def test_hero_scrim_flips_with_theme_lightness() -> None:
     scrim = scrim[: scrim.index("\n}")]
     assert "isLightColor(theme.backgroundColor)" in scrim
     assert '"#FFFFFF"' in scrim
-    assert '"#0F172A"' in scrim
+    # Dark themes wash toward their own background, not a fixed navy.
+    assert "theme.backgroundColor" in scrim.split("isLightColor(theme.backgroundColor)", 1)[1]
 
 
 @pytest.mark.parametrize("playbook", sorted(list_playbooks()))

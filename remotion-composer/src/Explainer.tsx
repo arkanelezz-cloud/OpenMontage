@@ -60,8 +60,10 @@ function isLightColor(hex: string): boolean {
 // text color: a dark scrim under a light theme's dark text drops the pair to
 // ~3.4:1, which is the same legibility bug in reverse.
 function heroScrim(theme: ThemeConfig): string {
+  // Dark themes wash toward their own background (a fixed navy turned warm
+  // themes such as arkan-arabic blue).
   const { r, g, b } = hexToRgb(
-    isLightColor(theme.backgroundColor) ? "#FFFFFF" : "#0F172A"
+    isLightColor(theme.backgroundColor) ? "#FFFFFF" : theme.backgroundColor
   );
   return (
     `radial-gradient(ellipse at center, rgba(${r},${g},${b},0.35) 0%, ` +
@@ -478,11 +480,18 @@ const VideoScene: React.FC<{
 // ---------------------------------------------------------------------------
 
 // Background image layer — renders an AI-generated/stock image behind data components
+function overlayRgba(hex: string, opacity: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 const BackgroundImageLayer: React.FC<{
   src: string;
   overlayOpacity?: number;
+  // Overlay tint; the theme background, so warm themes are not washed navy.
+  overlayColor?: string;
   children: React.ReactNode;
-}> = ({ src, overlayOpacity = 0.55, children }) => {
+}> = ({ src, overlayOpacity = 0.55, overlayColor = "#0F172A", children }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -509,7 +518,7 @@ const BackgroundImageLayer: React.FC<{
       {/* Dark overlay for readability */}
       <AbsoluteFill
         style={{
-          background: `rgba(15, 23, 42, ${overlayOpacity})`,
+          background: overlayRgba(overlayColor, overlayOpacity),
         }}
       />
       {/* Component content on top */}
@@ -523,8 +532,10 @@ const BackgroundVideoLayer: React.FC<{
   src: string;
   startFrom?: number;
   overlayOpacity?: number;
+  // Overlay tint; the theme background, so warm themes are not washed navy.
+  overlayColor?: string;
   children: React.ReactNode;
-}> = ({ src, startFrom = 0, overlayOpacity = 0.55, children }) => {
+}> = ({ src, startFrom = 0, overlayOpacity = 0.55, overlayColor = "#0F172A", children }) => {
   const { fps } = useVideoConfig();
 
   return (
@@ -543,7 +554,7 @@ const BackgroundVideoLayer: React.FC<{
       {/* Dark overlay for readability */}
       <AbsoluteFill
         style={{
-          background: `rgba(15, 23, 42, ${overlayOpacity})`,
+          background: overlayRgba(overlayColor, overlayOpacity),
         }}
       />
       {/* Component content on top */}
@@ -561,6 +572,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
           src={cut.backgroundVideo}
           startFrom={cut.backgroundVideoStart ?? 0}
           overlayOpacity={cut.backgroundOverlay ?? 0.55}
+          overlayColor={theme.backgroundColor}
         >
           {element}
         </BackgroundVideoLayer>
@@ -571,6 +583,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         <BackgroundImageLayer
           src={cut.backgroundImage}
           overlayOpacity={cut.backgroundOverlay ?? 0.55}
+          overlayColor={theme.backgroundColor}
         >
           {element}
         </BackgroundImageLayer>

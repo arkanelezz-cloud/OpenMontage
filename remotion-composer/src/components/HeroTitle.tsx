@@ -5,6 +5,12 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { loadArabicFont, withArabicFallback } from "../lib/localFonts";
+import { textDirection } from "../lib/textDirection";
+
+loadArabicFont(["400", "700"]);
+
+const HERO_FONT = "Space Grotesk, Inter, system-ui, sans-serif";
 
 type HeroTitleProps = {
   title: string;
@@ -37,8 +43,15 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Staggered letter-by-letter spring
-  const titleChars = title.split("");
+  // Staggered letter-by-letter spring. Arabic letters join to their
+  // neighbours, so splitting an Arabic title into one inline-block per letter
+  // breaks every word into isolated letters and lays them out left to right.
+  // RTL titles animate word by word instead, in reading order.
+  const direction = textDirection(title);
+  const rtl = direction === "rtl";
+  const titleChars = rtl ? title.split(/(\s+)/).filter(Boolean) : title.split("");
+  const step = rtl ? 4 : 1.2;
+  const accentCount = rtl ? 1 : 8; // first word (RTL) or first 8 letters
 
   return (
     <AbsoluteFill
@@ -48,14 +61,14 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
         background: scrimBackground,
       }}
     >
-      <div style={{ textAlign: "center", maxWidth: "85%" }}>
+      <div dir={direction} style={{ direction, textAlign: "center", maxWidth: "85%" }}>
         {/* Main title with per-character spring */}
         <div
           style={{
             fontSize: 72,
-            fontWeight: 800,
-            fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
-            lineHeight: 1.2,
+            fontWeight: rtl ? 700 : 800,
+            fontFamily: withArabicFallback(HERO_FONT),
+            lineHeight: rtl ? 1.5 : 1.2,
             display: "flex",
             justifyContent: "center",
             flexWrap: "wrap",
@@ -63,7 +76,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
           }}
         >
           {titleChars.map((char, i) => {
-            const delay = i * 1.2;
+            const delay = i * step;
             const charSpring = spring({
               frame: frame - delay,
               fps,
@@ -77,7 +90,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
                   display: "inline-block",
                   opacity: charSpring,
                   transform: `translateY(${interpolate(charSpring, [0, 1], [30, 0])}px)`,
-                  color: i < 8 ? accentColor : textColor, // Accent first word
+                  color: i < accentCount ? accentColor : textColor, // Accent first word
                   whiteSpace: char === " " ? "pre" : undefined,
                   minWidth: char === " " ? "0.3em" : undefined,
                 }}
@@ -94,16 +107,17 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
             style={{
               marginTop: 20,
               opacity: spring({
-                frame: frame - titleChars.length * 1.2 - 5,
+                frame: frame - titleChars.length * step - 5,
                 fps,
                 config: { damping: 20 },
               }),
               fontSize: 28,
               fontWeight: 400,
               color: subtitleColor,
-              fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
+              fontFamily: withArabicFallback(HERO_FONT),
+              // Letter spacing pulls joined Arabic letters apart.
+              letterSpacing: rtl ? 0 : "0.1em",
+              textTransform: rtl ? undefined : "uppercase",
             }}
           >
             {subtitle}
