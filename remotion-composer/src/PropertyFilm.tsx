@@ -62,6 +62,8 @@ interface Overlay {
   stats?: { value: number; label: string; at: number }[];
   /** endCard: icon before the subtitle ("none" hides it). Default "pin". */
   subIcon?: Feature["icon"] | "none";
+  /** brand: logo mark image; endCard: full logo lockup image (public path). */
+  src?: string;
 }
 
 export interface PropertyFilmProps {
@@ -555,7 +557,7 @@ const Brand: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o,
   return (
     <AbsoluteFill style={{ justifyContent: top ? "flex-start" : "flex-end", alignItems: "flex-end", padding: `${base * 0.045}px ${base * 0.05}px`, opacity: fade * exit }}>
       <div dir="rtl" style={{ display: "flex", alignItems: "center", gap: base * 0.014, background: "rgba(43,40,35,0.45)", borderRadius: base * 0.012, padding: `${base * 0.01}px ${base * 0.018}px`, backdropFilter: "blur(6px)" }}>
-        <Icon name="building" size={base * 0.04} color={theme.accent} />
+        {o.src ? <Img src={resolveAsset(o.src)} style={{ height: base * 0.05 }} /> : <Icon name="building" size={base * 0.04} color={theme.accent} />}
         <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
           <span style={{ fontFamily: FONT, fontSize: base * 0.03, fontWeight: 700, color: theme.text }}>{o.text ?? "أركان العز"}</span>
           {o.subtitle && <span style={{ fontFamily: FONT, fontSize: base * 0.018, color: theme.accent }}>{o.subtitle}</span>}
@@ -574,6 +576,16 @@ const EndCard: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ 
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
       <AbsoluteFill style={{ background: theme.bg, opacity: bg }} />
+      {o.src ? (
+        <>
+          <Img src={resolveAsset(o.src)} style={{ width: base * 0.62, opacity: sub, transform: `translateY(${(1 - sub) * base * 0.03}px)` }} />
+          {o.label && (
+            <div dir="rtl" style={{ fontFamily: FONT, fontSize: base * 0.04, color: theme.accent, opacity: sub, marginTop: base * 0.04 }}>
+              {o.label}
+            </div>
+          )}
+        </>
+      ) : (<>
       <div style={{ marginBottom: base * 0.03, opacity: sub }}>
         <Icon name="building" size={base * 0.12} color={theme.accent} />
       </div>
@@ -589,6 +601,7 @@ const EndCard: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ 
           <span style={{ fontFamily: FONT, fontSize: base * 0.045, color: theme.text }}>{o.subtitle}</span>
         </div>
       )}
+      </>)}
     </AbsoluteFill>
   );
 };
