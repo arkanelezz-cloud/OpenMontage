@@ -53,6 +53,7 @@ from tools.base_tool import (
     ToolStability,
     ToolTier,
 )
+from lib.rtl_text import font_for_subtitles, fontsdir_option
 
 
 class VideoCompose(BaseTool):
@@ -657,10 +658,7 @@ class VideoCompose(BaseTool):
             vfilters = []
 
             if subtitle_path and Path(subtitle_path).exists():
-                style = inputs.get("subtitle_style", {})
-                ass_style = self._build_subtitle_style(style)
-                sub_escaped = str(Path(subtitle_path).resolve()).replace("\\", "/").replace(":", "\\:")
-                vfilters.append(f"subtitles='{sub_escaped}':force_style='{ass_style}'")
+                vfilters.append(self._subtitles_filter(subtitle_path, inputs.get("subtitle_style", {})))
 
             cmd = ["ffmpeg", "-y", "-i", str(final_input)]
 
@@ -2721,16 +2719,14 @@ class VideoCompose(BaseTool):
         if not subtitle_path.exists():
             return ToolResult(success=False, error=f"Subtitle file not found: {subtitle_path}")
 
-        style = inputs.get("subtitle_style", {})
-        ass_style = self._build_subtitle_style(style)
-        sub_escaped = str(subtitle_path.resolve()).replace("\\", "/").replace(":", "\\:")
+        sub_filter = self._subtitles_filter(subtitle_path, inputs.get("subtitle_style", {}))
         codec = inputs.get("codec", "libx264")
         crf = inputs.get("crf", 23)
 
         cmd = [
             "ffmpeg", "-y",
             "-i", str(input_path),
-            "-vf", f"subtitles='{sub_escaped}':force_style='{ass_style}'",
+            "-vf", sub_filter,
             "-c:v", codec, "-crf", str(crf),
             "-c:a", "copy",
             str(output_path),
@@ -2911,6 +2907,20 @@ class VideoCompose(BaseTool):
                     resolved[k] = v
 
         return resolved
+
+    @classmethod
+    def _subtitles_filter(cls, subtitle_path: str | Path, style: dict | None) -> str:
+        """FFmpeg ``subtitles`` filter for ``subtitle_path`` with ``style``.
+
+        Arabic (RTL) subtitles set to a Latin-only default font are switched to
+        the bundled Arabic font (IBM Plex Sans Arabic), and libass is pointed at ``assets/fonts`` so the
+        font is found without being installed.
+        """
+        style = dict(style or {})
+        style["font"] = font_for_subtitles(subtitle_path, style.get("font")) or "Inter"
+        ass_style = cls._build_subtitle_style(style)
+        sub_escaped = str(Path(subtitle_path).resolve()).replace("\\", "/").replace(":", "\\:")
+        return f"subtitles='{sub_escaped}'{fontsdir_option()}:force_style='{ass_style}'"
 
     @staticmethod
     def _build_subtitle_style(style: dict) -> str:

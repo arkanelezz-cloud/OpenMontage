@@ -3,6 +3,8 @@ import { cancelRender, continueRender, delayRender } from "remotion";
 import playfairItalicUrl from "../fonts/PlayfairDisplay-Italic-latin.woff2";
 import playfairUrl from "../fonts/PlayfairDisplay-latin.woff2";
 import spaceGroteskUrl from "../fonts/SpaceGrotesk-latin.woff2";
+import plexArabic400Url from "../fonts/IBMPlexSansArabic-arabic-400.woff2";
+import plexArabic700Url from "../fonts/IBMPlexSansArabic-arabic-700.woff2";
 
 /**
  * Fonts bundled with the compositions instead of fetched from Google Fonts at
@@ -25,9 +27,22 @@ import spaceGroteskUrl from "../fonts/SpaceGrotesk-latin.woff2";
 const LATIN =
   "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD";
 
+// Arabic subset of IBM Plex Sans Arabic (SIL OFL 1.1, licence in ../fonts). Its unicode range
+// covers Arabic only, so it can sit first in any font stack: Latin text keeps
+// falling through to the next family while Arabic words get real, joined glyphs
+// instead of whatever system font the render machine happens to have.
+const ARABIC =
+  "U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC";
+
 const loaded = new Set<string>();
 
-const register = (family: string, url: string, style: "normal" | "italic", weights: string[]) => {
+const register = (
+  family: string,
+  url: string | ((weight: string) => string),
+  style: "normal" | "italic",
+  weights: string[],
+  unicodeRange: string = LATIN,
+) => {
   if (typeof FontFace === "undefined") return family;
   for (const weight of weights) {
     const key = `${family}-${style}-${weight}`;
@@ -35,7 +50,8 @@ const register = (family: string, url: string, style: "normal" | "italic", weigh
     loaded.add(key);
     queueMicrotask(() => {
       const handle = delayRender(`Loading bundled font ${key}`);
-      const face = new FontFace(family, `url(${url}) format('woff2')`, { weight, style, unicodeRange: LATIN });
+      const src = typeof url === "function" ? url(weight) : url;
+      const face = new FontFace(family, `url(${src}) format('woff2')`, { weight, style, unicodeRange });
       face
         .load()
         .then(() => {
@@ -53,3 +69,23 @@ export const loadSpaceGrotesk = (weights: string[]) => ({ fontFamily: register("
 export const loadPlayfair = (style: "normal" | "italic", weights: string[]) => ({
   fontFamily: register("Playfair Display", style === "italic" ? playfairItalicUrl : playfairUrl, style, weights),
 });
+
+// Two static files are bundled; weights 500 and below use the 400 file,
+// heavier weights the 700 file. Same family as the FFmpeg subtitle path
+// (lib/rtl_text.py), so both renderers draw Arabic captions alike.
+export const ARABIC_FONT_FAMILY = "IBM Plex Sans Arabic";
+export const loadArabicFont = (weights: string[] = ["400", "700"]) => ({
+  fontFamily: register(
+    ARABIC_FONT_FAMILY,
+    (weight) => (Number(weight) > 500 ? plexArabic700Url : plexArabic400Url),
+    "normal",
+    weights,
+    ARABIC,
+  ),
+});
+
+/** Puts the Arabic font first in a CSS font stack (no-op if already there). */
+export const withArabicFallback = (fontFamily: string) =>
+  fontFamily.toLowerCase().includes(ARABIC_FONT_FAMILY.toLowerCase())
+    ? fontFamily
+    : `"${ARABIC_FONT_FAMILY}", ${fontFamily}`;

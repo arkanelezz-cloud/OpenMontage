@@ -49,6 +49,7 @@ from tools.base_tool import (
     ToolStability,
     ToolTier,
 )
+from lib.rtl_text import font_for_subtitles, fontsdir_option
 
 
 class RemotionCaptionBurn(BaseTool):
@@ -398,12 +399,15 @@ class RemotionCaptionBurn(BaseTool):
             # Escape path for FFmpeg subtitles filter (Windows colon issue)
             srt_escaped = str(tmp_srt).replace("\\", "/").replace(":", "\\:")
 
+            # Arabic captions need a font with Arabic glyphs; Segoe UI has
+            # them on Windows only, so RTL text uses the bundled Arabic font.
+            font = font_for_subtitles(tmp_srt, "Segoe UI")
             cmd = [
                 "ffmpeg", "-y",
                 "-i", input_path,
                 "-vf", (
-                    f"subtitles='{srt_escaped}'"
-                    ":force_style='FontName=Segoe UI,FontSize=24,Bold=1,"
+                    f"subtitles='{srt_escaped}'{fontsdir_option()}"
+                    f":force_style='FontName={font},FontSize=24,Bold=1,"
                     "PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
                     "Outline=3,Shadow=2,Alignment=2,MarginV=100'"
                 ),

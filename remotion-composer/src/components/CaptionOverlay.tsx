@@ -7,6 +7,11 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { loadArabicFont, withArabicFallback } from "../lib/localFonts";
+
+// Captions render at weight 700; register the bundled Arabic font so Arabic
+// words never fall back to a system font that may lack the glyphs.
+loadArabicFont(["700"]);
 
 // Word-level caption for TikTok-style highlight display
 export interface WordCaption {
@@ -126,8 +131,10 @@ const PageRenderer: React.FC<{
           style={{
             fontSize,
             fontWeight: 700,
-            fontFamily,
-            lineHeight: 1.4,
+            fontFamily: withArabicFallback(fontFamily),
+            // Arabic glyphs are taller than Latin ones; give them room so
+            // stacked lines do not touch.
+            lineHeight: direction === "rtl" ? 1.6 : 1.4,
             whiteSpace: "pre-wrap",
           }}
         >
