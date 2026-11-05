@@ -33,6 +33,14 @@ from tools.base_tool import (
     ToolStatus,
     ToolTier,
 )
+from tools.audio.arabic_voice import (
+    AZURE_ARABIC_ALIASES,
+    AZURE_DIALECT_VOICES,
+    DIALECTS,
+    is_arabic_text,
+    locale_from_voice,
+    normalize_dialect,
+)
 
 # Output format tokens keyed by container. Chosen for compositing quality.
 _MP3_FORMAT = "audio-48khz-192kbitrate-mono-mp3"
@@ -99,6 +107,7 @@ class AzureTTS(BaseTool):
         "jenny": "en-US-JennyNeural",  # friendly, clear
     }
     DEFAULT_VOICE = "en-US-AndrewMultilingualNeural"
+    RECOMMENDED_VOICES.update(AZURE_ARABIC_ALIASES)
 
     input_schema = {
         "type": "object",
@@ -109,8 +118,10 @@ class AzureTTS(BaseTool):
                 "type": "string",
                 "description": (
                     "Azure voice short name (e.g. 'en-US-AndrewMultilingualNeural') "
-                    "or a shortlist alias: andrew, brandon, ava, guy, jenny. "
-                    "Default: en-US-AndrewMultilingualNeural."
+                    "or a shortlist alias: andrew, brandon, ava, guy, jenny, or for "
+                    "Arabic hamed, zariyah (Saudi), shakir, salma (Egyptian). "
+                    "Default: en-US-AndrewMultilingualNeural, or a native Arabic "
+                    "voice chosen by arabic_dialect when the text is Arabic."
                 ),
             },
             "rate": {
@@ -135,8 +146,19 @@ class AzureTTS(BaseTool):
             },
             "locale": {
                 "type": "string",
-                "default": "en-US",
-                "description": "BCP-47 locale for the SSML <speak> element.",
+                "description": (
+                    "BCP-47 locale for the SSML <speak> element. Defaults to the "
+                    "voice's own locale (ar-EG for ar-EG-ShakirNeural), else en-US."
+                ),
+            },
+            "arabic_dialect": {
+                "type": "string",
+                "enum": list(DIALECTS),
+                "description": (
+                    "Dialect of the default voice for Arabic text when no voice is "
+                    "given: msa (default) or saudi -> ar-SA-HamedNeural, "
+                    "egyptian -> ar-EG-ShakirNeural."
+                ),
             },
             "output_path": {"type": "string"},
             "output_format": {
@@ -166,7 +188,9 @@ class AzureTTS(BaseTool):
         max_retries=2,
         retryable_errors=["ConnectionError", "Timeout", "429", "503"],
     )
-    idempotency_key_fields = ["text", "voice", "rate", "pitch", "style", "output_format"]
+    idempotency_key_fields = [
+        "text", "voice", "rate", "pitch", "style", "output_format", "locale", "arabic_dialect",
+    ]
     side_effects = ["writes audio file to output_path", "sends text to Azure AI Speech"]
     user_visible_verification = ["Listen to generated audio for natural speech quality"]
 
@@ -197,11 +221,13 @@ class AzureTTS(BaseTool):
     def _resolve_voice(self, inputs: dict[str, Any]) -> str:
         voice = (inputs.get("voice") or "").strip()
         if not voice:
+            if is_arabic_text(inputs.get("text", "")):
+                return AZURE_DIALECT_VOICES[normalize_dialect(inputs.get("arabic_dialect"))][0]
             return self.DEFAULT_VOICE
         return self.RECOMMENDED_VOICES.get(voice.lower(), voice)
 
     def _build_ssml(self, inputs: dict[str, Any], voice: str) -> str:
-        locale = str(inputs.get("locale", "en-US"))
+        locale = str(inputs.get("locale") or locale_from_voice(voice))
         rate = str(inputs.get("rate", "0%"))
         pitch = str(inputs.get("pitch", "0%"))
         style = inputs.get("style")
