@@ -570,17 +570,18 @@ const Brand: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o,
 const EndCard: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ o, theme }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
-  const bg = interpolate(frame, [0, 18], [0, 0.82], { extrapolateRight: "clamp" });
+  const bg = interpolate(frame, [0, 18], [0, 0.88], { extrapolateRight: "clamp" });
   const base = Math.min(width, height);
   const sub = useRise(22, 22);
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
       <AbsoluteFill style={{ background: theme.bg, opacity: bg }} />
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
       {o.src ? (
         <>
           <Img src={resolveAsset(o.src)} style={{ width: base * 0.62, opacity: sub, transform: `translateY(${(1 - sub) * base * 0.03}px)` }} />
           {o.label && (
-            <div dir="rtl" style={{ fontFamily: FONT, fontSize: base * 0.04, color: theme.accent, opacity: sub, marginTop: base * 0.04 }}>
+            <div dir="rtl" style={{ fontFamily: FONT, fontSize: base * 0.05, fontWeight: 700, color: theme.text, opacity: sub, marginTop: base * 0.045, padding: `${base * 0.008}px ${base * 0.03}px`, borderTop: `2px solid ${theme.accent}`, textShadow: "0 2px 14px rgba(0,0,0,0.85)" }}>
               {o.label}
             </div>
           )}
@@ -602,6 +603,7 @@ const EndCard: React.FC<{ o: Overlay; theme: PropertyFilmProps["theme"] }> = ({ 
         </div>
       )}
       </>)}
+      </div>
     </AbsoluteFill>
   );
 };
