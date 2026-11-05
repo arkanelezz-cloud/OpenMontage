@@ -1,4 +1,8 @@
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { loadArabicFont, withArabicFallback } from "../lib/localFonts";
+import { textDirection } from "../lib/textDirection";
+
+loadArabicFont(["700"]);
 
 interface TextCardProps {
   text: string;
@@ -25,6 +29,8 @@ export const TextCard: React.FC<TextCardProps> = ({
     to: 1,
   });
 
+  const direction = textDirection(text);
+
   return (
     <AbsoluteFill
       style={{
@@ -34,16 +40,18 @@ export const TextCard: React.FC<TextCardProps> = ({
       }}
     >
       <div
+        dir={direction}
         style={{
+          direction,
           opacity,
           transform: `scale(${scale})`,
           fontSize,
           color,
-          fontFamily: "Inter, system-ui, sans-serif",
+          fontFamily: withArabicFallback("Inter, system-ui, sans-serif"),
           fontWeight: 700,
           textAlign: "center",
           maxWidth: "80%",
-          lineHeight: 1.3,
+          lineHeight: direction === "rtl" ? 1.6 : 1.3,
         }}
       >
         {text}
