@@ -16,6 +16,7 @@ import { ProductReveal, ProductRevealProps } from "./components/ProductReveal";
 import { CaptionOverlay, WordCaption } from "./components/CaptionOverlay";
 import { CollageBurst, CollageBurstProps } from "./CollageBurst";
 import { LyricOverlay, LyricOverlayProps } from "./LyricOverlay";
+import { PropertyFilm, calculatePropertyFilmMetadata } from "./PropertyFilm";
 
 // ---------------------------------------------------------------------------
 // Theme System — prevents every video from looking like dark fintech
@@ -135,6 +136,23 @@ const calculateMetadata: CalculateMetadataFunction<ExplainerProps> = async ({
 export const Root: React.FC = () => {
   return (
     <>
+      <Composition
+        id="PropertyFilm"
+        component={PropertyFilm}
+        durationInFrames={30 * 30}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          width: 1920,
+          height: 1080,
+          durationSec: 30,
+          theme: { bg: "#2B2823", text: "#F6F4EF", accent: "#C9B48A", panel: "#2B2823", muted: "#C9BFAE" },
+          shots: [],
+          overlays: [],
+        }}
+        calculateMetadata={calculatePropertyFilmMetadata}
+      />
       <Composition
         id="Explainer"
         component={Explainer}
