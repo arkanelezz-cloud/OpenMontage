@@ -71,8 +71,9 @@ export const loadPlayfair = (style: "normal" | "italic", weights: string[]) => (
 });
 
 // Two static files are bundled; weights 500 and below use the 400 file,
-// heavier weights the 700 file. Same family as the FFmpeg subtitle path
-// (lib/rtl_text.py), so both renderers draw Arabic captions alike.
+// heavier weights the 700 file. The FFmpeg subtitle path (lib/rtl_text.py)
+// uses Noto Sans Arabic instead: libass draws this font's lam-alef as a box,
+// while Chromium shapes it correctly.
 export const ARABIC_FONT_FAMILY = "IBM Plex Sans Arabic";
 export const loadArabicFont = (weights: string[] = ["400", "700"]) => ({
   fontFamily: register(

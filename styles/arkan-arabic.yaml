@@ -7,7 +7,9 @@
 # taupe #6E5F45, ink #2B2823, paper #F6F4EF, and the gold title accent #C9B48A.
 # The brand's title font is Tajawal ExtraBold, but Tajawal draws boxes for
 # hamza-under-alef and shadda when FFmpeg/libass burns subtitles, so this
-# playbook uses IBM Plex Sans Arabic (the brand's body font) throughout.
+# playbook uses IBM Plex Sans Arabic (the brand's body font) for Remotion
+# text. FFmpeg-burned subtitles use the bundled Noto Sans Arabic instead,
+# because libass draws IBM Plex Sans Arabic's lam-alef (لا) as a box.
 identity:
   name: "Arkan Arabic"
   category: cinematic
@@ -104,7 +106,7 @@ overlays:
 
 quality_rules:
   - "All on-screen text is Arabic and reads right to left; Latin only for brand or product names"
-  - "Captions use IBM Plex Sans Arabic so hamza and shadda render in both Remotion and FFmpeg"
+  - "Remotion captions use IBM Plex Sans Arabic; FFmpeg-burned subtitles switch to Noto Sans Arabic automatically so hamza, shadda and lam-alef render"
   - "Minimum contrast ratio 4.5:1 for body text"
   - "Gold (#C9B48A) only on dark backgrounds, never as text on paper"
   - "Narration in a native Arabic voice; never an English voice reading Arabic"
